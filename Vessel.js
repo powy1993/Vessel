@@ -849,7 +849,6 @@
             } else {
                 cookieText += '; path=/'
             }
-            console.log(cookieText);
             return cookieText
         },
         _makeCookieValue = function(s) {
