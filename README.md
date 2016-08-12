@@ -4,3 +4,12 @@
     目前进度：
      - dom.js => html, test, append, prepend ...
      - change.js => animate ...
+        简易属性的动画可以适用
+            V('#xx').animate('width', 400, 1000, 'easeBounceOut');
+            V('#xx').animate('height', 400, 1000, Vessel.easing.maker.elasticOut(5));
+            V('#xx').animate('transform', 'translate(400px,0)', 1000, 'easeBounceOut');
+        正在努力支持
+            color,
+            background-color,
+            scrollTop
+        等其他属性

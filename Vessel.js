@@ -4800,7 +4800,6 @@
                 to = this.end[len]
                 calcValue[len] = (to - from) * rate + from
             }
-            console.log(this.leftSide)
             Vessel(this.elem).css(
                 this.prop,
                 this.leftSide + calcValue.join(',') + this.rightSide
