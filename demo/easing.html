@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .time {
+        width: 40px;
+    }
+    .test {
+        width: 50px;
+        height: 50px;
+        background: red;
+        position: absolute;
+        left: 50%;
+        margin: 100px 0 100px -275px;
+        transform: translate(0, 0);
+    }
+    .core {
+        text-align: center;
+    }
+    .control {
+        margin-top: 300px;
+        width: 50px;
+    }
+</style>
+<script src="../Vessel.js"></script>
+</head>
+<body>
+    <div class="test" id="test"></div>
+    <div class="core">
+        <select id="select">
+
+            <option value ="easeQuadIn">easeQuadIn</option>
+            <option value ="easeQuadOut">easeQuadOut</option>
+            <option value="easeQuadInOut">easeQuadInOut</option>
+
+            <option value="easeCubicIn">easeCubicIn</option>
+            <option value="easeCubicOut">easeCubicOut</option>
+            <option value="easeCubicInOut">easeCubicInOut</option>
+
+            <option value="easeSineIn">easeSineIn</option>
+            <option value="easeSineOut">easeSineOut</option>
+            <option value="easeSineInOut">easeSineInOut</option>
+
+            <option value="easeExponentialIn">easeExponentialInn</option>
+            <option value="easeExponentialOut">easeExponentialOut</option>
+            <option value="easeExponentialInOut">easeExponentialInOut</option>
+
+            <option value="easeCircleIn">easeCircleIn</option>
+            <option value="easeCircleOut">easeCircleOut</option>
+            <option value="easeCircleInOut">easeCircleInOut</option>
+
+            <option value="easeBackIn">easeBackIn</option>
+            <option value="easeBackOut">easeBackOut</option>
+            <option value="easeBackInOut">easeBackInOut</option>
+
+            <option value="easeBounceIn">easeBounceIn</option>
+            <option value="easeBounceOut">easeBounceOut</option>
+            <option value="easeBounceInOut">easeBounceInOut</option>
+
+            <option value="easeElasticIn">easeElasticIn</option>
+            <option value="easeElasticOut">easeElasticOut</option>
+            <option value="easeElasticInOut">easeElasticInOut</option>
+
+        </select>
+        time:<input class="time" id="time" value="1000"/>
+        <button class="control" id="control">start</button>
+    </div>
+    <script>
+    var test = V('#test'),
+        control = V('#control'),
+        select = V('#select'),
+        time = V('#time'),
+        flag = false
+
+    control[0].onclick = function() {
+        if (flag) {
+            test[0].style.cssText = ''
+            control.text('strat')
+        } else {
+            test.animate('width', 100, +time.val(), select.val())
+            test.animate('height', 100, +time.val(), select.val())
+            test.animate('transform', 'translate(500px,0)', +time.val(), select.val())
+            control.text('back')
+        }
+        flag = !flag
+    }
+
+    </script>
+</body>
+</html>
