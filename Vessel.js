@@ -4348,11 +4348,13 @@
     }
 
     easing = {
+        // 暴露构造器以提供多样化需求
+        maker: easeMaker,
+        // 默认效果
         __default__: 'easeQuadOut',
-        default: function(x) {
+        ease: function(x) {
             return Vessel.easing[Vessel.easing.__default__](x)
         },
-        maker: easeMaker,
         // 匀加速运动
         easeQuadIn: function() {
             return easeMaker.rateIn(2)
@@ -4777,7 +4779,7 @@
             this.easing = lang.isFunction(easing) ? 
                             easing :
                             Vessel.easing[easing]
-            this.easing = !this.easing ? Vessel.easing['default'] : this.easing
+            this.easing = !this.easing ? Vessel.easing.ease : this.easing
 
             this.startTime = lang.now()
         },
