@@ -1,5 +1,5 @@
 /**
- * change.js(#include css.js, animate.js) => 尚在完善中
+ * change.js(#include css.js, animation.js)
  * 让元素可以进行一些位置颜色透明度等变化的动态类
  * rely: Vessel.js, lang.js, browser.js, JSON.js
  * owner: rusherwang
@@ -25,12 +25,13 @@
         // 需要运算输入值的情况
         needRunReg = /{{.*}}/,
         cssKeyFix,
-        getStyles, curCSS,  // 获取样式相关
-        devideStyle,        // 获取单位相关
-        cssHooks,           // 样式钩子
-        css,                // 样式属性的入口
-        animate,            // 动画入口
-        Tween, TweenProto   // 动画队列相关
+        getStyles, curCSS,           // 获取样式相关
+        devideStyle,                 // 获取单位相关
+        cssHooks,                    // 样式钩子
+        css,                         // 样式属性的入口
+        animate,                     // 动画入口
+        Tween, TweenProto,           // 动画队列相关
+        line, interval, lineRun      // 队列执行相关
 
     cssHooks = {
         // 无需兼容的情况
@@ -302,24 +303,60 @@
             }
 
             this.duration = duration
-            this.easing = easing || 'swing'
+
+            this.easing = lang.isFunction(easing) ? 
+                            easing :
+                            Vessel.easing[easing]
+            this.easing = !this.easing ? Vessel.easing['default'] : this.easing
+
             this.startTime = lang.now()
         },
-        run: function() {
-            if (this.cancel) {
+        run: function(index) {
+            var now = +new Date,
+                rate = (now - this.startTime) / this.duration,
+                len = this.start.length,
+                calcValue = [],
+                from, to
 
+            if (rate >= 1) {
+                line.splice(index, 1)
+                rate = 1
             } else {
-
+                rate = this.easing(rate)
             }
+
+            while (len--) {
+                from = this.start[len]
+                to = this.end[len]
+                calcValue[len] = (to - from) * rate + from
+            }
+            Vessel(this.elem).css(
+                this.prop,
+                this.leftSide + calcValue.join(',') + this.rightSide
+            )
         }
     }
     TweenProto.init.prototype = TweenProto
 
+    line = []
+    lineRun = function() {
+        var len = line.length
+        while (len--) line[len].run(len)
+        if (line.length === 0) {
+            clearInterval(interval)
+            interval = null
+        }
+    }
     animate = function(prop, end, duration, easing) {
         return this.each(function() {
             // 将动画加入队列中
-            a = Tween(this, prop, end, duration, easing)
-            console.log(a)
+            t = Tween(this, prop, end, duration, easing)
+            if (!t.cancel) {
+                line.push(t)
+                if (!interval) {
+                    interval = setInterval(lineRun, 13)
+                }
+            }
         })
     }
 
