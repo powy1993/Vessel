@@ -15,7 +15,7 @@
         background: red;
         position: absolute;
         left: 50%;
-        margin: 100px 0 100px -275px;
+        margin: 100px 0 100px -200px;
         transform: translate(0, 0);
     }
     .core {
@@ -66,7 +66,7 @@
             <option value="easeElasticInOut">easeElasticInOut</option>
 
         </select>
-        time:<input class="time" id="time" value="1000"/>
+        time:<input class="time" id="time" value="1500"/>
         <button class="control" id="control">start</button>
     </div>
     <script>
@@ -77,13 +77,23 @@
         flag = false
 
     control[0].onclick = function() {
+        var duration, easing
         if (flag) {
             test[0].style.cssText = ''
             control.text('strat')
         } else {
-            test.animate('width', 100, +time.val(), select.val())
-            test.animate('height', 100, +time.val(), select.val())
-            test.animate('transform', 'translate(500px,0)', +time.val(), select.val())
+            duration = +time.val()
+            easing = select.val()
+
+            control.attr('disabled', 'disabled')
+
+            test.animate('width', 100, duration, easing)
+                    .animate('height', 100, duration, easing)
+                    .animate('transform', 'translate(400px,0)', duration, easing)
+                    .animate('background-color', 'blue', duration, easing, function() {
+                        control.removeAttr('disabled')
+                    })
+
             control.text('back')
         }
         flag = !flag

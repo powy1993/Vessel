@@ -4736,16 +4736,43 @@
         }
     }
 
+    animateHooks = {
+        // 无需兼容的情况
+        'default': {
+            calc: function(value) {
+                return Math.round(value * 100) / 100
+            },
+            set: function(elem, prop, value) {
+                Vessel(elem).css(prop, value)
+            }
+        }
+    }
+
+    // 颜色相关兼容
+    lang.each([
+        'color',
+        'background',
+        'background-color',
+        'text-shadow',
+        'box-shadow'], function(i, key) {
+            !animateHooks[key] && (animateHooks[key] = {})
+            animateHooks[key].calc = function(value) {
+                return value < .5 ? 0 : value >= 254.5 ? 255 : Math.round(value)
+            }
+        }
+    )
+
     // 动画队列
-    Tween = function(elem, prop, end, duration, easing) {
-        return new Tween.prototype.init(elem, prop, end, duration, easing)
+    Tween = function(elem, prop, end, duration, easing, callback) {
+        return new Tween.prototype.init(elem, prop, end, duration, easing, callback)
     }
 
     TweenProto = Tween.prototype = {
         constructor: Tween,
-        init: function(elem, prop, end, duration, easing) {
+        init: function(elem, prop, end, duration, easing, callback) {
             var vElem = Vessel(elem),
                 start = vElem.css(prop),
+                hook = animateHooks[prop] || {},
                 devide
             this.elem = elem
             this.prop = prop
@@ -4775,13 +4802,18 @@
             }
 
             this.duration = duration
+            this.startTime = +new Date
+            this.callback = callback
 
+            // 过渡时候用到的函数
             this.easing = lang.isFunction(easing) ? 
                             easing :
                             Vessel.easing[easing]
             this.easing = !this.easing ? Vessel.easing.ease : this.easing
 
-            this.startTime = lang.now()
+            !hook.calc && (hook.calc = animateHooks['default']['calc'])
+            !hook.set && (hook.set = animateHooks['default']['set'])
+            this.handle = hook
         },
         run: function(index) {
             var now = +new Date,
@@ -4793,6 +4825,7 @@
             if (rate >= 1) {
                 line.splice(index, 1)
                 rate = 1
+                this.callback && (this.callback(this.elem))
             } else {
                 rate = this.easing(rate)
             }
@@ -4800,9 +4833,11 @@
             while (len--) {
                 from = this.start[len]
                 to = this.end[len]
-                calcValue[len] = (to - from) * rate + from
+                calcValue[len] = this.handle.calc((to - from) * rate + from)
             }
-            Vessel(this.elem).css(
+
+            this.handle.set(
+                this.elem,
                 this.prop,
                 this.leftSide + calcValue.join(',') + this.rightSide
             )
@@ -4819,10 +4854,10 @@
             interval = null
         }
     }
-    animate = function(prop, end, duration, easing) {
+    animate = function(prop, end, duration, easing, callback) {
         return this.each(function() {
             // 将动画加入队列中
-            t = Tween(this, prop, end, duration, easing)
+            t = Tween(this, prop, end, duration, easing, callback)
             if (!t.cancel) {
                 line.push(t)
                 if (!interval) {

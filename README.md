@@ -8,8 +8,8 @@
             V('#xx').animate('width', 400, 1000, 'easeBounceOut');
             V('#xx').animate('height', 400, 1000, Vessel.easing.maker.elasticOut(5));
             V('#xx').animate('transform', 'translate(400px,0)', 1000, 'easeBounceOut');
+            V('#xx').animate('background-color', 'blue', 1000, 'easeBounceOut');
         正在努力支持
-            color,
-            background-color,
-            scrollTop
+            scrollTop,
+            box-shadow
         等其他属性
