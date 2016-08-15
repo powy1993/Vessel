@@ -4749,6 +4749,9 @@
     }
 
     // 颜色相关兼容
+    var colorPickReg = /#([\da-fA-F]{3,6})/,
+        // 这里匹配了十六进制可能的颜色值
+        colorExchangeReg = /[\da-fA-F]{2}/g
     lang.each([
         'color',
         'background',
@@ -4757,7 +4760,44 @@
         'box-shadow'], function(i, key) {
             !animateHooks[key] && (animateHooks[key] = {})
             animateHooks[key].calc = function(value) {
+                // 在色值取值外的内容要进行舍去，不然会导致渐变错误
                 return value < .5 ? 0 : value >= 254.5 ? 255 : Math.round(value)
+            }
+            !cssHooks[key] && (cssHooks[key] = {})
+            cssHooks[key].get = function(elem, key) {
+                var style = curCSS(elem, key),
+                    color, cell
+                style = style ? style : elem.style[key]
+                
+                // Fix IE(7-9) Bug
+                // background:#333 => 
+                //      css('background') = ''
+                //      css('background-color') = '#333'
+                // 如果没有值，那么尝试从后缀为 -color 的值中进行搜索
+                if (style === '') {
+                    style = curCSS(elem, key + '-color')
+                    style = style ? style : elem.style[key + '-color']
+                }
+
+                color = style.match(colorPickReg)
+                if (color && color[1]) {
+                    cell = color[1]
+                    // 将 #abc 转化成 #aabbcc 形式
+                    if (cell.length === 3) {
+                        cell = cell.replace(/\d/g, function(c) {
+                            return c + c
+                        })
+                    }
+                    // 将 #xxxxxx 转化成 rgb(xx,xx,xx) 形式
+                    cell = cell.replace(colorExchangeReg,
+                        function(c) {
+                            return ',' + lang.parse(c, 16, 10)
+                        }
+                    )
+                    style = 'rgb(' + cell.substring(1) + ')'
+                }
+
+                return style
             }
         }
     )
@@ -4790,7 +4830,8 @@
                     console.warn(elem)
                     console.warn('CSS style "' + prop + '" to "' + end + '" failed so that animate won\'t effect.')
                 }
-                return this.cancel = true
+                this.cancel = true
+                return
             } else {
                 // 拼接前后的内容
                 this.leftSide = devide[0][0]
@@ -4814,6 +4855,7 @@
             !hook.calc && (hook.calc = animateHooks['default']['calc'])
             !hook.set && (hook.set = animateHooks['default']['set'])
             this.handle = hook
+            return this
         },
         run: function(index) {
             var now = +new Date,
