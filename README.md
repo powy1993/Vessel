@@ -9,9 +9,9 @@
             V('#xx').animate('height', 400, 1000, Vessel.easing.maker.elasticOut(5));
             V('#xx').animate('transform', 'translate(400px,0)', 1000, 'easeBounceOut');
             V('#xx').animate('background-color', 'blue', 1000, 'easeBounceOut');
+        帧数和重绘已经进行调节，动画会更加流畅
         正在努力
             1.支持
                 scrollTop,
                 box-shadow
             等其他属性
-            2.跳帧的时候进行动态调整
