@@ -4483,7 +4483,10 @@
         cssCore = Vessel.browser.cssCore,
         // 目前，这些属性是没有单位的
         cssOnlyNumber = {
+            animationIterationCount: true,
             columnCount: true,
+            flexGrow: true,
+            flexShrink: true,
             fillOpacity: true,
             fontWeight: true,
             lineHeight: true,
@@ -4497,13 +4500,13 @@
         // 需要运算输入值的情况
         needRunReg = /{{.*}}/,
         cssKeyFix,
-        getStyles, curCSS,           // 获取样式相关
-        devideStyle,                 // 获取单位相关
-        cssHooks,                    // 样式钩子
-        css,                         // 样式属性的入口
-        animate,                     // 动画入口
-        Tween, TweenProto,           // 动画队列相关
-        line, interval, lineRun      // 队列执行相关
+        getStyles, curCSS,                // 获取样式相关
+        devideStyle,                      // 获取单位相关
+        cssHooks,                         // 样式钩子
+        css,                              // 样式属性的入口
+        animate,                          // 动画入口
+        Tween, TweenProto,                // 动画队列相关
+        raf, caf, line, interval, lineRun // 队列执行相关
 
     cssHooks = {
         // 无需兼容的情况
@@ -4891,21 +4894,43 @@
     lineRun = function() {
         var len = line.length
         while (len--) line[len].run(len)
-        if (line.length === 0) {
-            clearInterval(interval)
+        line.length === 0 && caf(interval)
+    }
+    // 如果有 HTML5 提供的动画接口，就使用它
+    if (window.requestAnimationFrame &&
+        window.cancelAnimationFrame) {
+        raf = function (init) {
+            // 这里因为 window.requestAnimationFrame 会传入 keyFrame 的数字
+            // 但是有些旧版的浏览器却不会传
+            // 所以用 true 表示初始化
+            if (init === true) {
+                interval = window.requestAnimationFrame(raf)
+            } else if (interval) {
+                // 为了防止 interval 增加过快，这里就不进行更新了
+                // 当要停止的时候 interval = null，也可以阻止递归继续
+                window.requestAnimationFrame(raf)
+                lineRun()
+            }
+        }
+        caf = function(id) {
+            window.cancelAnimationFrame(id)
+            interval = null
+        }
+    } else {
+        raf = function() {
+            interval = setInterval(lineRun, 16.7)
+        }
+        caf = function(id) {
+            clearInterval(id)
             interval = null
         }
     }
+
     animate = function(prop, end, duration, easing, callback) {
         return this.each(function() {
             // 将动画加入队列中
             t = Tween(this, prop, end, duration, easing, callback)
-            if (!t.cancel) {
-                line.push(t)
-                if (!interval) {
-                    interval = setInterval(lineRun, 13)
-                }
-            }
+            !t.cancel && line.push(t) && !interval && raf(true)
         })
     }
 
