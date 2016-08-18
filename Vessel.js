@@ -3543,8 +3543,10 @@
             // 这边是处理 Vessel(fn) 的情况
             context = context || window
             return selector.call(context)
-        } else {
-            return
+        } else if (selector === window) {
+            this[0] = selector
+            this.length = 1
+            return this
         }
         return lang.merge(first, second)
     }
@@ -3701,8 +3703,10 @@
     // 遍历每一个元素，并执行 fn 函数
     // fn 可接受两个参数，第一个表示序号，第二个表示这个元素
     // 其中 this 也表示这个元素
-    proto.each = function(fn) {
-        return lang.each(this, fn)
+    proto.each = function(fn, onlyElem) {
+        return lang.each(this, function(k, v) {
+            onlyElem ? v.nodeType && fn.call(v, k, v) : fn.call(v, k, v)
+        })
     }
 
     // 遍历每一个元素，并执行 fn 函数
@@ -3771,11 +3775,11 @@
                 } else {
                     fixTableTarget(this, value).innerHTML = value
                 }
-            })
+            }, true)
         }
         return this.each(function() {
             fixTableTarget(this, value).appendChild(value.cloneNode(true))
-        })
+        }, true)
     }
 
     // 在元素开头增加指定的内容
@@ -3802,7 +3806,7 @@
             if (this && this.parentNode) {
                 this.parentNode.removeChild(this)
             }
-        })
+        }, true)
         return
     }
 
@@ -3818,7 +3822,7 @@
             } else {
                 this.innerHTML = ''
             }
-        })
+        }, true)
     }
 
     // 获取当前元素在父元素下的位置
@@ -3898,7 +3902,7 @@
             } else {
                 o.addClass(value)
             }
-        })
+        }, true)
     }
 
     // 获取或设置某属性
@@ -3908,7 +3912,7 @@
             if (lang.isString(value)) {
                 return this.each(function() {
                     this.setAttribute(key, value)
-                })
+                }, true)
             } else {
                 return this[0] && this[0].getAttribute(key) || null
             }
@@ -3921,15 +3925,15 @@
         // 临时代码
         return this.each(function() {
             this.removeAttribute(key)
-        })
+        }, true)
     }
 
     // 获取匹配的元素集合中第一个元素的当前值
     // 或设置匹配的元素集合中每个元素的值
     proto.val = function(value) {
         return lang.isString(value) || lang.isNumber(value) ? this.each(function() {
-            this.value = value
-        }) : this[0] && this[0].value
+                this.value = value
+            }, true) : this[0] && this[0].value
     }
 }()
 
@@ -4685,8 +4689,6 @@
             d1 = devide(s1 + ''),
             d2 = devide(s2 + ''),
             u1, u2
-        // 当两个可变数字和单位都相同时，这次的动画不必进行
-        if (lang.equal(d1, d2)) return false
         // 当不符合格式要求的时候，这次动画不必进行
         if (d1.length !== 3 || d2.length !== 3) return false
         u1 = d1.slice(0, 2)
@@ -4742,6 +4744,16 @@
     animateHooks = {
         // 无需兼容的情况
         'default': {
+            get: function(elem, prop, end) {
+                var vElem = Vessel(elem),
+                    start = vElem.css(prop)
+
+                vElem.css(prop, end)
+                end = vElem.css(prop)
+                vElem.css(prop, start)
+
+                return [start === 'auto' ? '' : start, end]
+            },
             calc: function(value) {
                 return Math.round(value * 100) / 100
             },
@@ -4805,28 +4817,77 @@
         }
     )
 
-    // 动画队列
+    // 滚动条相关兼容
+    lang.each({
+        scrollTop: 'pageYOffset',
+        scrollLeft: 'pageXOffset'
+    }, function(key, v) {
+        var docEle = document.documentElement
+        animateHooks[key] = {
+            get: function(elem, prop, end) {
+                return [
+                    !elem.parentNode ? 
+                        docEle[prop] || window[v] || document.body[prop] || 0 :
+                        elem[prop],
+                    end
+                ]
+            },
+            calc: function(value) {
+                return ~~Math.round(value)
+            },
+            set: function() {
+                // 这边将判断写在了外面，这样可以在执行的时候少判断一次
+                if (lang.strstr('Y', v)) {
+                    return function(elem, prop, value) {
+                        if (elem.parentNode) {
+                            elem[prop] = value
+                        } else {
+                            window.scrollTo(0, value)
+                        }
+                    }
+                } else {
+                    return function(elem, prop, value) {
+                        if (elem.parentNode) {
+                            elem[prop] = value
+                        } else {
+                            window.scrollTo(value, 0)
+                        }
+                    }
+                }
+            }()
+        }
+    })
+    
+    // 初始化，生成一个计算好的可以被单独执行的动画对象
     Tween = function(elem, prop, end, duration, easing, callback) {
-        return new Tween.prototype.init(elem, prop, end, duration, easing, callback)
+        return new Tween.prototype.init(
+            elem,       // 相关元素
+            prop,       // 相关属性
+            end,        // 动画结束时候的位置
+            duration,   // 动画持续时间
+            easing,     // 过渡效果
+            callback    // 动画执行结束后回调函数
+        )
     }
 
     TweenProto = Tween.prototype = {
         constructor: Tween,
         init: function(elem, prop, end, duration, easing, callback) {
-            var vElem = Vessel(elem),
-                start = vElem.css(prop),
-                hook = animateHooks[prop] || {},
-                devide
+            var hook = animateHooks[prop] || {},
+                duration = +duration || 1000,
+                res, devide
+
             this.elem = elem
             this.prop = prop
-            this.start = start === 'auto' ? '0px' : start
 
-            // 这里是用测试法得出动画之后结果会变成什么数值
-            vElem.css(prop, end)
-            this.end = vElem.css(prop)
-            vElem.css(prop, start)
+            // 初始化 获取 计算 和 设置 的方法
+            !hook.get && (hook.get = animateHooks['default']['get'])
+            !hook.calc && (hook.calc = animateHooks['default']['calc'])
+            !hook.set && (hook.set = animateHooks['default']['set'])
 
-            devide = devideStyle(this.start, this.end)
+            res = hook.get(elem, prop, end)
+
+            devide = devideStyle(res[0], res[1])
             if (devide === false) {
                 if (typeof console === 'object') {
                     console.warn('Set\n')
@@ -4845,6 +4906,12 @@
                 this.end = devide[2]
             }
 
+            // 当开始和结束相同时，这次的动画不必进行
+            if (this.start === this.end) {
+                this.cancel = true
+                return
+            }
+
             this.duration = duration
             this.startTime = +new Date
             this.callback = callback
@@ -4855,8 +4922,6 @@
                             Vessel.easing[easing]
             this.easing = !this.easing ? Vessel.easing.ease : this.easing
 
-            !hook.calc && (hook.calc = animateHooks['default']['calc'])
-            !hook.set && (hook.set = animateHooks['default']['set'])
             this.handle = hook
             return this
         },
@@ -4927,10 +4992,10 @@
     }
 
     animate = function(prop, end, duration, easing, callback) {
-        return this.each(function() {
+        return prop && this.each(function() {
             // 将动画加入队列中
-            t = Tween(this, prop, end, duration, easing, callback)
-            !t.cancel && line.push(t) && !interval && raf(true)
+            tween = Tween(this, prop, end, duration, easing, callback)
+            !tween.cancel && line.push(tween) && !interval && raf(true)
         })
     }
 
