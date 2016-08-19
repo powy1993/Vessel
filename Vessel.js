@@ -4509,6 +4509,7 @@
         cssHooks,                         // 样式钩子
         css,                              // 样式属性的入口
         animate,                          // 动画入口
+        stop,                             // 动画终止入口
         Tween, TweenProto,                // 动画队列相关
         raf, caf, line, interval, lineRun // 队列执行相关
 
@@ -4735,7 +4736,7 @@
                         calcValue += cssOnlyNumber[key] ? '' : 'px'
                     }
                 }
-                (hook && hook.set ? hook : cssHooks['default']).set(this, key, calcValue)
+                ;(hook && hook.set ? hook : cssHooks['default']).set(this, key, calcValue)
             })
             return this
         }
@@ -4889,6 +4890,7 @@
 
             devide = devideStyle(res[0], res[1])
             if (devide === false) {
+                // 如果是无法解析和无法匹配的开始和结束帧，就提示并退出
                 if (typeof console === 'object') {
                     console.warn('Set\n')
                     console.warn(elem)
@@ -4932,14 +4934,20 @@
                 calcValue = [],
                 from, to
 
-            if (rate >= 1) {
+            if (rate >= 1 || this.stop === 2) {
+                // 强制置到动画末尾，同时移出动画执行队列
                 line.splice(index, 1)
                 rate = 1
                 this.callback && (this.callback(this.elem))
+            } else if (this.stop === 1) {
+                // 直接移出动画执行队列
+                line.splice(index, 1)
+                return
             } else {
                 rate = this.easing(rate)
             }
 
+            // 这里将过渡用到的数字进行进度计算
             while (len--) {
                 from = this.start[len]
                 to = this.end[len]
@@ -4957,13 +4965,26 @@
 
     line = []
     lineRun = function() {
-        var len = line.length
-        while (len--) line[len].run(len)
+        var len = line.length,
+            needStop = !lang.isEmpty(stopList)
+        // 每个单独执行
+        while (len--) {
+            if (needStop && lang.isSet(stopList[len])) {
+                // 1 代表动画立即结束并停留在当前位置
+                // 2 代表动画立即结束并置于动画末尾
+                line[len]['stop'] = stopList[len] === true ? 2 : 1
+            }
+            line[len] && line[len].run(len)
+        }
+        needStop && (stopList = {})
         line.length === 0 && caf(interval)
     }
-    // 如果有 HTML5 提供的动画接口，就使用它
+    
+    // 动画每帧执行调用入口
     if (window.requestAnimationFrame &&
         window.cancelAnimationFrame) {
+        // 如果有 HTML5 提供的动画接口，就使用它
+        // 这个可以保证每次计算的帧都会被 Paint 
         raf = function (init) {
             // 这里因为 window.requestAnimationFrame 会传入 keyFrame 的数字
             // 但是有些旧版的浏览器却不会传
@@ -4983,6 +5004,11 @@
         }
     } else {
         raf = function() {
+            // 如果不支持 raf, 就构造一个类似的函数
+            // 该函数按照每秒 60 帧的方式执行，但是中间可能会因为性能漏掉 Paint
+            // 所以实际上会小于每秒 60 帧
+            // 不再继续提高帧数的原因也和上述有关
+            // 浏览器优化可能会尽量减少 Paint，导致大量掉帧
             interval = setInterval(lineRun, 16.7)
         }
         caf = function(id) {
@@ -4999,7 +5025,20 @@
         })
     }
 
-    Vessel.fn.extend('css', css).extend('animate', animate)
+    var stopList = {}
+    stop = function(toEnd) {
+        return this.each(function(k, v) {
+            // 将动画移除队列
+            lang.each(line, function(i) {
+                this.elem === v && (stopList[i] = !!toEnd)
+            })
+        })
+    }
+
+    Vessel.fn
+        .extend('css', css)
+        .extend('animate', animate)
+        .extend('stop', stop)
 }(window)
 
 Vessel.lang.union(window, Vessel.lang)

@@ -79,19 +79,18 @@
     control[0].onclick = function() {
         var duration, easing
         if (flag) {
+            test.stop(0)
             test[0].style.cssText = ''
             control.text('strat')
         } else {
             duration = +time.val()
             easing = select.val()
 
-            control.attr('disabled', 'disabled')
-
             test.animate('width', 100, duration, easing)
                     .animate('height', 100, duration, easing)
                     .animate('transform', 'translate(400px,0)', duration, easing)
                     .animate('background-color', '#aaee22', duration, easing, function() {
-                        control.removeAttr('disabled')
+                        console.log('animate end!')
                     })
 
             control.text('back')
