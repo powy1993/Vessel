@@ -353,6 +353,9 @@
             return o
         },
         merge: function(first, second) {
+            // 如果某一个不是类数组对象，就退出
+            if (!typeCheck.isArrayLike(first) ||
+                !typeCheck.isArrayLike(second)) return first
             var len = +second.length,
                 i = +first.length,
                 j = 0
@@ -3523,7 +3526,9 @@
     // Vessel() 的入口
     init = proto.init = function(selector, context) {
         var first, second
-        if (lang.isString(selector)){
+        if (!selector) {
+            return this
+        } else if (lang.isString(selector)) {
             // 这边是 Vessel(selector, context) 的情况
             first = this
             first.selector = selector
@@ -3534,19 +3539,16 @@
             // 这边是处理 Vessel(Vessel 对象或者 nodeList) 的情况
             first = this.constructor()
             second = selector
-        } else if (selector && selector.nodeType) {
+        } else if (selector && selector.nodeType || selector === window) {
             // 这边是处理 Vessel(DOMNode) 的情况
-            this[0] = selector
-            this.length = 1
-            return this
+            first = this
+            second = [selector]
         } else if (lang.isFunction(selector)) {
             // 这边是处理 Vessel(fn) 的情况
             context = context || window
             return selector.call(context)
-        } else if (selector === window) {
-            this[0] = selector
-            this.length = 1
-            return this
+        } else {
+            second = []
         }
         return lang.merge(first, second)
     }
@@ -3759,9 +3761,9 @@
                 value.nodeType !== 3 &&      // 文本节点
                 value.nodeType !== 9 &&      // 文档节点
                 value.nodeType !== 11) {     // 框架节点
-                return this
+                return
             }
-        } else if (lang.isString(value)){
+        } else if (lang.isString(value) || lang.isNumber(value)) {
             // 临时代码
             return this.each(function() {
                 var that, temp
@@ -3769,9 +3771,9 @@
                     that = this
                     temp = this.ownerDocument.createElement('div')
                     temp.innerHTML = '<table><tbody>' + value + '</tbody></table>'
-                    V(temp.firstChild.firstChild).children().each(function() {
-                        that.appendChild(this)
-                    })
+                    Vessel(temp.firstChild.firstChild).children().each(function() {
+                        that.appendChild(this.cloneNode(true))
+                    }, true)
                 } else {
                     fixTableTarget(this, value).innerHTML = value
                 }
@@ -3818,7 +3820,7 @@
         return this.each(function() {
             var doc, parent
             if (lang.tagName(this, 'tbody')) {
-                V(this).children().remove()
+                Vessel(this).children().remove()
             } else {
                 this.innerHTML = ''
             }
@@ -5040,6 +5042,3 @@
         .extend('animate', animate)
         .extend('stop', stop)
 }(window)
-
-Vessel.lang.union(window, Vessel.lang)
-Vessel.lang.union(window, Vessel.util)
