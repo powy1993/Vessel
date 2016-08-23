@@ -68,10 +68,12 @@
         </select>
         time:<input class="time" id="time" value="1500"/>
         <button class="control" id="control">start</button>
+        <button class="control" id="stop">stop</button>
     </div>
     <script>
     var test = V('#test'),
         control = V('#control'),
+        stop = V('#stop'),
         select = V('#select'),
         time = V('#time'),
         flag = false
@@ -96,6 +98,10 @@
             control.text('back')
         }
         flag = !flag
+    }
+
+    stop[0].onclick = function() {
+        test.stop()
     }
 
     </script>

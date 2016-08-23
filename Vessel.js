@@ -3723,8 +3723,24 @@
     // 并且，这里面不会包括 特殊标签的内容，例如 script style 等
     // 为了保证统一性和扩展性，所以自写了一个函数
     var getText = function(node) {
-        return node.innerText
+        var nodeType = node.nodeType,
+            res = ''
+        if (nodeType === 1 ||
+            nodeType === 9 ||
+            nodeType === 11) {
+            if (lang.isString(node.textContent)) {
+                return node.textContent
+            } else {
+                for (node = node.firstChild; node; node = node.nextSibling) {
+                    res += getText(node)
+                }
+            }
+        } else if (nodeType === 3 || nodeType === 4) {
+            return node.nodeValue
+        }
+        return res
     }
+    
     // 获取匹配的元素集合中第一个元素的 文本内容
     // 或设置匹配的元素集合中每个元素的 文本内容
     proto.text = function(value) {
