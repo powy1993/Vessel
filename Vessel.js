@@ -3737,34 +3737,20 @@
 		hasTagReg = /<|&#?\w+;/,
 		tagNameReg = /<([\w:-]+)/,
 		// 判断是否含有 tbody
-		tbodyReg = /<tbody/i
+		tbodyReg = /<tbody/i,
+		getText, getAll, cleanUp
 
 	// Support for IE9-
 	htmlWrap.optgrou = htmlWrap.option
 	htmlWrap.tbody = htmlWrap.tfoot = htmlWrap.colgroup = htmlWrap.caption = htmlWrap.thead
 	htmlWrap.th = htmlWrap.td
 
-	// 遍历每一个元素，并执行 fn 函数
-	// fn 可接受两个参数，第一个表示序号，第二个表示这个元素
-	// 其中 this 也表示这个元素
-	proto.each = function(fn, onlyElem) {
-		return lang.each(this, function(k, v) {
-			onlyElem ? v.nodeType && fn.call(v, k, v) : fn.call(v, k, v)
-		})
-	}
-
-	// 遍历每一个元素，并执行 fn 函数
-	// 最终返回包含所有执行结果的数组
-	proto.map = function(fn) {
-		return lang.map(this, fn)
-	}
-
 	// 获取节点的文本内容(内部函数)
 	// 虽然这里可以使用 innerText || textContent 完成
 	// 但似乎每个浏览器出来的内容不是那么统一
 	// 并且，这里面不会包括 特殊标签的内容，例如 script style 等
 	// 为了保证统一性和扩展性，所以自写了一个函数
-	var getText = function(node) {
+	getText = function(node) {
 		var nodeType = node.nodeType,
 			res = ''
 		if (nodeType === 1 ||
@@ -3781,6 +3767,59 @@
 			return node.nodeValue
 		}
 		return res
+	}
+
+	// 获取 context 所有的子节点，包括子节点的子节点
+	getAll = function(context, tag) {
+		var elems, elem,
+			i = 0,
+			res = context.getElementsByTagName ?
+					context.getElementsByTagName(tag || '*') :
+					context.querySelectorAll ?
+					context.querySelectorAll(tag || '*') :
+					undefined
+		// 当没有两个方法提供元素查找的时候
+		// 防止有些浏览器对某些元素不提供这些查找元素的方法
+		if (!res) {
+			res = []
+			elems = context.childNodes || context
+			for (; null != (elem = elems[i]); ++i) {
+				// 当没有标签限制或者符合当前标签名的时候，加入
+				if (!tag || lang.tagName(elem, tag)) {
+					res.push(elem)
+				} else {
+					// 这里需要递归，当限制某一个标签而当前标签又不符合的时候
+					// 因为 childNodes 只查当前元素子层
+					lang.merge(res, getAll(elem, tag))
+				}
+			}
+		}
+
+		return tag === undefined || tag && lang.tagName(context, tag) ?
+				// 如果当前的元素也符合条件，那么也要并入
+				lang.merge([context], res) :
+				res
+	}
+
+	// 清理掉元素相关的内容，包括动画，包括绑定事件等其他内容
+	// 待事件绑定完成之后补全
+	cleanUp = function(nodes) {
+		return
+	}
+
+	// 遍历每一个元素，并执行 fn 函数
+	// fn 可接受两个参数，第一个表示序号，第二个表示这个元素
+	// 其中 this 也表示这个元素
+	proto.each = function(fn, onlyElem) {
+		return lang.each(this, function(k, v) {
+			onlyElem ? v.nodeType && fn.call(v, k, v) : fn.call(v, k, v)
+		})
+	}
+
+	// 遍历每一个元素，并执行 fn 函数
+	// 最终返回包含所有执行结果的数组
+	proto.map = function(fn) {
+		return lang.map(this, fn)
 	}
 
 	// 获取匹配的元素集合中第一个元素的 文本内容
@@ -3836,8 +3875,9 @@
 					value.nodeType !== 3 &&      // 文本节点
 					value.nodeType !== 9 &&      // 文档节点
 					value.nodeType !== 11) {     // 框架节点
-					return [value]
+					return []
 				}
+				return [value]
 			}
 			if (type === 'array' ||
 				type === 'object' && lang.isArrayLike(value)) {
@@ -3911,28 +3951,61 @@
 	proto.append = function(value) {
 		var value = toDom(value),
 			target
-		console.log(value)
+
 		return this.each(function() {
 			target = this
 			lang.each(value, function() {
-				fixTableTarget(target, this).appendChild(this.cloneNode(true))
+				fixTableTarget(target, this).appendChild(
+					this.cloneNode(true)
+				)
 			})
 		}, true)
 	}
 
 	// 在元素开头增加指定的内容
-	proto.prepend = function() {
-
+	proto.prepend = function(value) {
+		var value = toDom(value),
+			target, before
+		return this.each(function() {
+			target = this
+			before = target.firstChild
+			lang.each(value, function() {
+				fixTableTarget(target, this).insertBefore(
+					this.cloneNode(true),
+					before
+				)
+			})
+		}, true)
 	}
 
 	// 在被选元素前插入指定的内容
-	proto.before = function() {
-
+	proto.before = function(value) {
+		var value = toDom(value),
+			target
+		return this.each(function() {
+			target = this
+			target.parentNode && lang.each(value, function() {
+				target.parentNode.insertBefore(
+					this.cloneNode(true),
+					target
+				)
+			})
+		}, true)
 	}
 
 	// 在被选元素后插入指定的内容
-	proto.after = function() {
-
+	proto.after = function(value) {
+		var value = toDom(value),
+			target
+		return this.each(function() {
+			target = this
+			target.parentNode && lang.each(value, function() {
+				target.parentNode.insertBefore(
+					this.cloneNode(true),
+					target.nextSibling
+				)
+			})
+		}, true)
 	}
 
 	// 移除节点
@@ -3942,6 +4015,7 @@
 		// 临时代码
 		this.each(function() {
 			if (this && this.parentNode) {
+				cleanUp(getAll(this))
 				this.parentNode.removeChild(this)
 			}
 		}, true)
@@ -3952,10 +4026,23 @@
 	// 这里需要注意的是要移除和它相关的任何缓存或者事件
 	// 防止出现内存泄漏
 	proto.empty = function() {
-		// 临时代码
-		return this.each(function() {
-			Vessel(this).children().remove()
-		}, true)
+		var i = 0,
+			elem
+		for (; null != (elem = this[i]); ++i) {
+			// 防止内存泄漏或者报错，要移除内部所有未完成动画以及绑定事件
+			if (elem.nodeType === 1) {
+				cleanUp(getAll(elem))
+			}
+			// 移除所有子节点
+			while (elem.firstChild) {
+				elem.removeChild(elem.firstChild)
+			}
+			// IE9- 当移除 select 里面的选项时，它内部的长度不正确的问题
+			if (elem.options && lang.tagName(elem, 'select')) {
+				elem.options.length = 0;
+			}
+		}
+		return this
 	}
 
 	// 获取当前元素在父元素下的位置
@@ -5067,31 +5154,36 @@
 				calcValue = [],
 				from, to
 
-			if (rate >= 1 || this.stop === 2) {
-				// 强制置到动画末尾，同时移出动画执行队列
-				line.splice(index, 1)
+			if (rate >= 1) {
+				this.stop = 2
 				rate = 1
-				this.callback && (this.callback(this.elem))
-			} else if (this.stop === 1) {
-				// 直接移出动画执行队列
-				line.splice(index, 1)
-				return
 			} else {
 				rate = this.easing(rate)
 			}
 
 			// 这里将过渡用到的数字进行进度计算
-			while (len--) {
-				from = this.start[len]
-				to = this.end[len]
-				calcValue[len] = this.handle.calc((to - from) * rate + from)
+			if (this.stop !== 1) {
+				while (len--) {
+					from = this.start[len]
+					to = this.end[len]
+					calcValue[len] = this.handle.calc((to - from) * rate + from)
+				}
+
+				this.handle.set(
+					this.elem,
+					this.prop,
+					this.leftSide + calcValue.join(',') + this.rightSide
+				)
 			}
 
-			this.handle.set(
-				this.elem,
-				this.prop,
-				this.leftSide + calcValue.join(',') + this.rightSide
-			)
+			if (this.stop) {
+				if (this.stop === 2) {
+					this.callback && (this.callback(this.elem))
+				}
+				// 置空，防止内存泄漏
+				this.elem = null
+				line.splice(index, 1)
+			}
 		}
 	}
 	TweenProto.init.prototype = TweenProto
