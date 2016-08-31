@@ -169,9 +169,6 @@
 		isNull: function(o) {
 			return o === null
 		},
-		isSet: function(o) {
-			return o != null
-		},
 		isBoolean: function(o) {
 			return typeof o === 'boolean'
 		},
@@ -208,7 +205,10 @@
 			// 这里排除了节点类型的对象
 			return typeof o === 'object' && !o.nodeType && !typeCheck.isArray(o) || false
 		},
-		isEmpty: function(o) {
+		isset: function(o) {
+			return o != null
+		},
+		empty: function(o) {
 			var oType = typeCheck.type(o),
 				i
 			if (oType === 'array' || oType === 'object') {
@@ -230,7 +230,7 @@
 	tool = {
 		// 去除字符串前后空格
 		trim: function(s) {
-			return !typeCheck.isSet(s) ? '' : (s + '').replace(TRIM, '')
+			return !typeCheck.isset(s) ? '' : (s + '').replace(TRIM, '')
 		},
 		// 将带有 - 的字符串转为驼峰形式
 		camelCase: function(s) {
@@ -317,7 +317,7 @@
 						if (o2Type === 'array') {
 							if (!tool.arrarr(o1[i], o2)) return false
 						} else if (o2Type === 'object') {
-							if (!typeCheck.isSet(o2[o1[i]])) return false
+							if (!typeCheck.isset(o2[o1[i]])) return false
 						} else {
 							return false
 						}
@@ -327,7 +327,7 @@
 			} else if (o1Type === 'object') {
 				if (o2Type === 'object') {
 					for (key in o1) {
-						if (!typeCheck.isSet(o2[key]) || !tool.contain(o1[key], o2[key])) return false
+						if (!typeCheck.isset(o2[key]) || !tool.contain(o1[key], o2[key])) return false
 					}
 					return true
 				}
@@ -445,12 +445,12 @@
 				len = o.length
 				for (i = 0; i < len; ++i) {
 					value = fn.call(o[i], o[i], arg)
-					if (typeCheck.isSet(value)) res.push(value)
+					if (typeCheck.isset(value)) res.push(value)
 				}
 			} else {
 				for (i in o) {
 					value = fn.call(o[i], o[i], arg)
-					if (typeCheck.isSet(value)) res.push(value)
+					if (typeCheck.isset(value)) res.push(value)
 				}
 			}
 			return ARRAY_PROTOTYPE.concat.apply([], res)
@@ -566,7 +566,7 @@
 				dateCut = diff.match(TIMEDIFF_REG) || []
 				mult = +dateCut[1]
 				sign = dateCut[2]
-				if (typeCheck.isNumber(mult) && typeCheck.isSet(sign)) {
+				if (typeCheck.isNumber(mult) && typeCheck.isset(sign)) {
 					diff = mult * (TIME_EXCHANGE[sign.substring(0, 1).toUpperCase()] || 1E3)
 				} else {
 					// 这里的情况是传了数字形式的字符串
@@ -963,7 +963,7 @@
 			// 获取本地存储失效日期的对象
 			getExpired: function() {
 				var expired = this.mode.getItem('__expired__')
-				return !lang.isEmpty(expired) && lang.JSON.decode(expired) || {}
+				return !lang.empty(expired) && lang.JSON.decode(expired) || {}
 			},
 			// 保存本地存储失效日期，如果发现传了错误的参数则移除，防止出错
 			saveExpired: function(expiredGroup) {
@@ -981,7 +981,7 @@
 				var expiredGroup = this.getExpired(),
 					value
 				if (this.expiredEnabled &&
-					lang.isSet(expiredGroup[k]) &&
+					lang.isset(expiredGroup[k]) &&
 					+expiredGroup[k] <= +new Date) {
 					// 如果过期了就直接移除
 					this.remove(k)
@@ -997,7 +997,7 @@
 			set: function(k, value, expired) {
 				var expiredTime, expiredGroup
 				this.mode.setItem(k, lang.isString(value) ? value : lang.JSON.encode(value))
-				if (this.expiredEnabled && lang.isSet(expired)) {
+				if (this.expiredEnabled && lang.isset(expired)) {
 					expiredTime = dateReg.test(expired) ? lang.getTime(expired) : lang.getTime(+new Date, expired)
 					// 这里将日期对象重新打包进行存储
 					expiredGroup = this.getExpired()
@@ -1009,7 +1009,7 @@
 			// 移除 Storage 的方法
 			remove: function(k) {
 				var expiredGroup = this.getExpired()
-				if (this.expiredEnabled && lang.isSet(expiredGroup[k])) {
+				if (this.expiredEnabled && lang.isset(expiredGroup[k])) {
 					// 也要移除相应的日期数据
 					delete expiredGroup[k]
 					this.saveExpired(expiredGroup)
@@ -3838,7 +3838,7 @@
 	// 或设置匹配的元素集合中每个元素的 文本内容
 	proto.text = function(value) {
 		var node = this[0]
-		return lang.isSet(value) ? this.empty().append(
+		return lang.isset(value) ? this.empty().append(
 			// 这里创建了一个文本节点，然后用 append 的方式加入
 			(node && node.ownerDocument || document).createTextNode(value)
 		) : getText(node)
@@ -3849,7 +3849,7 @@
 	proto.html = function(value) {
 		var node = this[0]
 		// 这里要对 value 进行判断
-		return lang.isSet(value) ? this.empty().append(value) : node.innerHTML
+		return lang.isset(value) ? this.empty().append(value) : node.innerHTML
 	}
 
 		// 当针对 table 元素直接进行添加 tr 时是不正确的
@@ -4292,12 +4292,12 @@
 
 	// 检查是否含有了某批数据
 	proto.has = function(key) {
-		return lang.isSet(this.data[key])
+		return lang.isset(this.data[key])
 	}
 	// 批量设置值
 	proto.set = function(param, value) {
 		var o = {}
-		if (lang.isString(param) && lang.isSet(value)) {
+		if (lang.isString(param) && lang.isset(value)) {
 			// 如果传入的是 key => value 形式就进行转化
 			o[param] = value
 			param = o
@@ -4309,11 +4309,11 @@
 	// 缺省 key 的话会返回所有值
 	proto.get = function(key, byValue) {
 		var data = this.data,
-			part = lang.isSet(key) ? key.split('.') : [],
+			part = lang.isset(key) ? key.split('.') : [],
 			len = part.length,
 			i = 0
 		for (; i < len; ++i) {
-			if (!lang.isSet(data[part[i]])) return
+			if (!lang.isset(data[part[i]])) return
 			data = data[part[i]]
 		}
 		return byValue ? lang.clone(data) : data
@@ -4801,7 +4801,7 @@
 		cssHooks[key] = {
 			get: function(elem, key) {
 				var value = key === 'width' ? elem.offsetWidth : elem.offsetHeight
-				if (value <= 0 || !lang.isSet(value)) {
+				if (value <= 0 || !lang.isset(value)) {
 					value = curCSS(elem, key)
 				}
 				return value + 'px'
@@ -4943,7 +4943,7 @@
 		if (!lang.isString(key)) return
 
 		key = cssKeyFix(key)
-		if (!lang.isSet(value)) {
+		if (!lang.isset(value)) {
 			// 如果没有 value 那就是需要进行获取
 			// 这里使用了钩子的方式获取兼容，可以让兼容代码和操作代码分离
 			// 利于后期的维护
@@ -4952,7 +4952,7 @@
 			if (needRunReg.test(value)) {
 				needRun = true
 			} else {
-				if (!lang.isEmpty(value) && lang.isNumber(+value)) {
+				if (!lang.empty(value) && lang.isNumber(+value)) {
 					value += cssOnlyNumber[key] ? '' : 'px'
 				}
 			}
@@ -4964,7 +4964,7 @@
 					calcValue = lang.run(calcValue, {
 						now: (hook && hook.get ? hook : cssHooks['default']).get(this, key)
 					})
-					if (!lang.isEmpty(value) && lang.isNumber(+calcValue)) {
+					if (!lang.empty(value) && lang.isNumber(+calcValue)) {
 						calcValue += cssOnlyNumber[key] ? '' : 'px'
 					}
 				}
@@ -5204,10 +5204,10 @@
 	line = []
 	lineRun = function() {
 		var len = line.length,
-			needStop = !lang.isEmpty(stopList)
+			needStop = !lang.empty(stopList)
 		// 每个单独执行
 		while (len--) {
-			if (needStop && lang.isSet(stopList[len])) {
+			if (needStop && lang.isset(stopList[len])) {
 				// 1 代表动画立即结束并停留在当前位置
 				// 2 代表动画立即结束并置于动画末尾
 				line[len]['stop'] = stopList[len] === true ? 2 : 1
