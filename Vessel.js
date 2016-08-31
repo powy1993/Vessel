@@ -29,7 +29,7 @@
 			i
 
 		var warnExtend = function(extra) {
-				Vessel.console.warn('Extension has been declared already, you are suggested to change your extension name.(' + extra + ' is not empty)')
+				console.warn('Extension has been declared already, you are suggested to change your extension name.(' + extra + ' is not empty)')
 			},
 			isset = function(o) {
 				return typeof o !== 'undefined'
@@ -74,9 +74,21 @@
 	Vessel.version = '1.0.1'
 
 	// 消息通知，后续单独写出来
-	Vessel.console = {}
-	Vessel.console.warn = function(log) {
-		typeof window.console === 'object' && window.console.warn(log)
+	var warn = window.console && console.warn || (console = {}, function() {}),
+		log = window.console && console.log || (console = {}, function() {})
+	console.warn = function() {
+		try {
+			warn.apply(console, arguments)
+		} catch(e) {
+			warn(arguments[0])
+		}
+	}
+	console.log = function() {
+		try {
+			log.apply(console, arguments)
+		} catch(e) {
+			log(arguments[0])
+		}
 	}
 
 	window.Vessel = window.V = Vessel
@@ -110,12 +122,12 @@
 		// 这个是用来匹配前后空白字符
 		TRIM = /^[\s\ufeff\xa0]+|[\s\ufeff\xa0]+$/g,
 		TIME_EXCHANGE     = {
-			'S': 1E3,
-			'I': 6E4,
-			'H': 3.6E6,
-			'D': 8.64E7,
-			'M': 2.6784E9,
-			'Y': 3.1536E10
+			S: 1E3,
+			I: 6E4,
+			H: 3.6E6,
+			D: 8.64E7,
+			M: 2.6784E9,
+			Y: 3.1536E10
 		},
 		TIME_GET_FUNCTION = {
 			S: function(d) {
@@ -790,7 +802,7 @@
 		// 分割传入地址，使之变成 domain 和 path 形式
 		locationReg = /^(?:http(?:s)?:\/\/)?([^\/]+)?(\/[^\?]+)?/,
 		_warn = function(s) {
-			Vessel.console.warn('Cannot set cookie with "' + s + '" because you are located in "' + window.location.href + '"')
+			console.warn('Cannot set cookie with "' + s + '" because you are located in "' + window.location.href + '"')
 		},
 		// 创建可以赋值给 document.cookie 的单个cookie键值对
 		// expires <Date> cookie的有效期限
@@ -939,7 +951,7 @@
 		}()
 
 	if (!_isLocalStorageSupported) {
-		Vessel.console.warn('Your browser cannot support "localStorage", please use "cookie" instead.')
+		console.warn('Your browser cannot support "localStorage", please use "cookie" instead.')
 	} else {
 		// 这里因为 session 和 local 的方法是一致的 所以构建一个 Storage 原型
 		var Storage = function(mode, expiredEnabled) {
@@ -4966,12 +4978,13 @@
 		// 无需兼容的情况
 		'default': {
 			get: function(elem, prop, end) {
-				var vElem = Vessel(elem),
-					start = vElem.css(prop)
+				var start, end
 
-				vElem.css(prop, end)
-				end = vElem.css(prop)
-				vElem.css(prop, start)
+				elem = [elem]
+				start = css.call(elem, prop)
+				css.call(elem, prop, end)
+				end = css.call(elem, prop)
+				css.call(elem, prop, start)
 
 				return [start === 'auto' ? '' : start, end]
 			},
@@ -4979,7 +4992,7 @@
 				return Math.round(value * 100) / 100
 			},
 			set: function(elem, prop, value) {
-				Vessel(elem).css(prop, value)
+				css.call([elem], prop, value)
 			}
 		}
 	}
@@ -4991,9 +5004,9 @@
 	lang.each([
 		'color',
 		'background',
-		'background-color',
-		'text-shadow',
-		'box-shadow'], function(i, key) {
+		'backgroundColor',
+		'textShadow',
+		'boxShadow'], function(i, key) {
 			!animateHooks[key] && (animateHooks[key] = {})
 			animateHooks[key].calc = function(value) {
 				// 在色值取值外的内容要进行舍去，不然会导致渐变错误
@@ -5094,7 +5107,7 @@
 	TweenProto = Tween.prototype = {
 		constructor: Tween,
 		init: function(elem, prop, end, duration, easing, callback) {
-			var hook = animateHooks[prop] || {},
+			var hook = animateHooks[cssKeyFix(prop)] || {},
 				duration = +duration || 1000,
 				res, devide
 
