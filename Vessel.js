@@ -4307,7 +4307,7 @@
 	}
 	// 获取某个值
 	// 缺省 key 的话会返回所有值
-	proto.get = function(key, byValue) {
+	proto.get = function(key, byRefer) {
 		var data = this.data,
 			part = lang.isset(key) ? key.split('.') : [],
 			len = part.length,
@@ -4316,7 +4316,7 @@
 			if (!lang.isset(data[part[i]])) return
 			data = data[part[i]]
 		}
-		return byValue ? lang.clone(data) : data
+		return byRefer ? data : lang.clone(data)
 	}
 	// 在当前执行步骤承诺某数据
 	proto.promise = function(param) {
