@@ -1,9 +1,12 @@
 ﻿# Vessel
+==========
 
     还没有写完！还在努力中！
     快乐学习，快来工作，快来生活！
 
-### lang.js
+==========
+
+### lang.js (基本语言扩展)
 
 - **type** 返回数据类型
 ``` js
@@ -325,6 +328,7 @@ V.lang.run('1+2+{{a + b}}', {a: 3, b: 4}) // '1+2+7'
 ```
 
 ### json.js
+
 - **encode** JSON编码
 - **decode** JSON解码
 ``` js
@@ -338,6 +342,7 @@ JSON.decode('{}')           // Object {}
 ```
 
 ### cookie.js
+
 - **cookie**
     - **set** 设置cookie
     - **get** 获取cookie
@@ -362,7 +367,7 @@ cookie.set('test', 1, '+1D', 'ac.qq.com/')      // 将cookie写在ac.qq.com下
 cookie.set('test', 1, '+1D', 'ac.qq.com/test')  // 将cookie写在ac.qq.com下的test路径
 ```
 
-### storage.js *(一些破旧的浏览器不支持此功能)*
+### storage.js
 
 - **local** 保存在本地存储中，浏览器关闭不消失
     - **set** 设置
@@ -377,6 +382,12 @@ cookie.set('test', 1, '+1D', 'ac.qq.com/test')  // 将cookie写在ac.qq.com下�
 ``` js
 // 原方法在 V.util 里面
 V.lang.union(window, V.util)
+// 判断当前状态下 local 是否可用
+if (V.util.local) {
+    // 可用
+} else {
+    // 兼容方案
+}
 // 获取local中键为 test 的内容
 local.get('test')
 // 删除local中键为 test 的内容
@@ -390,12 +401,13 @@ local.set('test', 1, '+1D')        // 一天之后失效
 local.set('test', 1, '2016/1/1')   // 2016年1月1日失效
 ```
 
-### connect.js
+### connect.js (异步数据获取)
 
 这块内容还在完善，之后会加入缓存机制
 load部分还没有写完
 
 - **get** 用 get 方法用服务器获取数据
+``` js
 V.util.get({
     url: 'ac.qq.com/test.php',
     data: {
@@ -407,7 +419,213 @@ V.util.get({
     },
     dataType: 'JSON'
 })
+```
 - **post** 用 post 方法用服务器获取数据
 - **load** 从服务器加载一些其他形式的数据
 
-### browser.js
+### browser.js (浏览器信息)
+
+- **ua** 浏览器信息
+    - **webkit** webkit内核版本信息
+    - **ie** ie内核版本
+    - **gecko** Gecko内核版本
+    - **mobile** 移动设备信息
+    - **android** 安卓系统版本
+    - **software** 浏览器软件信息
+    - **cssCore** 浏览器css特性前缀
+    - **getWidth** 获取浏览器可视宽度
+    - **getHeight** 获取浏览器可视高度
+```js
+// 以 chrome 手机模拟安卓浏览器为例
+V.browser.webkit        // 537.36
+V.browser.ie            // undefined
+V.browser.mobile        // 'Android'
+V.browser.android       // '6.0'
+V.browser.software      // 'Chrome'
+V.browser.cssCore       // 'webkit'
+V.browser.getWidth()    // 640
+V.browser.getHeight()   // 768
+```
+
+### selector.js (选择器)
+
+``` js
+// 选择所有标签为 div 的元素
+V('div')
+// 遍历所有标签为 div 的元素
+V('div').each(function() {
+    this       // 当前 div
+})
+// 选择所有标签为 div 的下属元素中含有 test 类的
+V('div').find('.test')
+// 选择所有标签为 div，并且含有 test 类的
+V('div').is('.test')
+// 选择所有标签为 div，并且剔除含有 test 类的
+V('div').not('.test')
+// 选择所有标签为 div 和 文本类型的input
+V('div').add('input[type=text]')
+// 从第二个开始选择所有标签为 div 的元素
+V('div').slice(1)
+// 选择前 2-6 个标签为 div 的元素
+V('div').slice(1, 6)
+// 选择第 n 个标签为 div 的元素
+V('div').eq(n)
+// 选择第一个标签为 div 的元素
+V('div').first()
+// 选择最后一个标签为 div 的元素
+V('div').last()
+// 选择所有标签为 div 的元素的父节点
+V('div').parent()
+// 选择所有标签为 div 的元素的祖辈节点中含有 test 类的
+V('div').parents('test')
+// 选择所有标签为 div 的元素的前一个节点
+V('div').prev()
+// 选择所有标签为 div 的元素前面的所有节点
+V('div').prevAll()
+// 选择所有标签为 div 的元素的下一个节点
+V('div').next()
+// 选择所有标签为 div 的元素后面的所有节点
+V('div').nextAll()
+// 选择所有标签为 div 的所有子节点
+V('div').children()
+// id 为 test 元素内部的文本内容
+V('#test').text()
+// 设置 id 为 test 元素内部的文本内容为 test
+V('#test').text('test')
+// id 为 test 元素内部的 html 内容
+V('#test').html()
+// 设置 id 为 test 元素内部的 html 内容为 <p>test</p>
+V('#test').html('<p>test</p>')
+// 在id 为 test 元素末尾增加指定的内容
+V('#test').append('<p>test</p>')
+// 在id 为 test 元素开头增加指定的内容
+V('#test').prepend('<p>test</p>')
+// 在id 为 test 元素前插入指定的内容
+V('#test').before('<p>test</p>')
+// 在id 为 test 元素后插入指定的内容
+V('#test').after('<p>test</p>')
+// 移除id 为 test 的元素
+V('#test').remove()
+// 清空id 为 test 的所有子元素
+V('#test').empty()
+// 获取id 为 test 的元素在父元素下的序号
+V('#test').index()
+// id 为 test 的元素是否含有 test 类
+V('#test').hasClass('test')
+// 给id 为 test 的元素添加 test 类
+V('#test').addClass('test')
+// 给id 为 test 的元素移除 test 类
+V('#test').removeClass('test')
+// 给id 为 test 的元素替换 test1 类 为 test2
+V('#test').replaceClass('test1', 'test2')
+// 给id 为 test 的元素不断替换某个类
+V('#test').toggleClass('test')
+// 获取 id 为 test 的 data-test 属性内容
+V('#test').attr('data-test')
+// 移除 id 为 test 的 data-test 属性内容
+V('#test').removeAttr('data-test')
+// 获取 id 为 test 的元素 value 内容
+V('#test').val()
+// 设置 id 为 test 的元素 value 内容
+V('#test').val('test')
+```
+
+### promise.js (简易控制数据获取和回调装置)
+
+- **has** 是否含有某个数据
+- **set** 设置某个数据
+- **wait** 等待一定毫秒数之后继续执行
+- **need** 含有某数据才能继续执行
+- **then** 按照顺序执行
+- **when** 一旦有某数据就执行
+- **reject** 清空所有数据并中止未执行完的步骤
+``` js
+var user
+// 声明 user 的 name 叫 ZhangSan
+user = V.util.promise({name: 'ZhangSan'})
+// 直接执行
+user.then(function(){
+    console.log(this.get('name'))
+})
+// 等待1秒后直接执行
+user.wait(1000).then(function(){
+    console.log(this.get('name'))
+})
+// 原本等待1秒后直接执行，中途想要强行继续执行
+user.wait(1000).then(function(){
+    console.log(this.get('name'))
+})
+user.forceRun()
+// 如果 user 含有内容 address 就执行
+// 此时不会执行，因为没有含有 address
+user.when('address', function() {
+    console.log(this.get('address'))
+})
+// 执行完设置之后，console被执行
+user.set('address', '666')      // 666
+// 当数据中 type == 1 的时候就执行 
+user.when('type=1', function() {
+    console.log(this.get('type'))
+})
+// 数据来自异步
+// 数据获取到之后如果返回内容是 1 则执行之前的when
+// 当然，这里后设置 when 也是可以的
+user.defer({
+    type: ['get', 'ac.qq.com/test', {
+        user: this.get('name')
+    }]
+})
+```
+
+### easing.js (过渡专用的效果函数)
+[效果预览](http://1.rushervessel.applinzi.com/demo/easing.html)
+
+- **ease**
+- **easeQuadIn**
+- **easeQuadOut**
+- **easeQuadInOut**
+- **easeCubicIn**
+- **easeCubicOut**
+- **easeCubicInOut**
+- **easeSineIn**
+- **easeSineOut**
+- **easeSineInOut**
+- **easeExponentialIn**
+- **easeExponentialOut**
+- **easeExponentialInOut**
+- **easeCircleIn**
+- **easeCircleOu**
+- **easeCircleInOut**
+- **easeBackIn**
+- **easeBackOut**
+- **easeBackInOut**
+- **easeBounceIn**
+- **easeBounceOut**
+- **easeBounceInOut**
+- **easeElasticIn**
+- **easeElasticOut**
+- **easeElasticInOut**
+- **maker** 
+
+### event.js (事件绑定与触发)
+    预计 2016-10 之前完成
+
+### change.js (让元素可以进行动态变化)
+- **css** 获取或者设置元素的css属性
+``` js
+// 获取 id 为 test 元素的宽度
+V('#test').css('width')
+// 设置 id 为 test 元素的宽度为20px
+V('#test').css('width', '20px')
+```
+- **animate** 设置动画
+``` js
+// 使 id 为 test 元素的背景在1s内渐变至 #333333
+V('#test').animate('background-color', '#333333', 1000, 'ease')
+// 使 id 为 test 元素的进行平移 x 轴 100px, y 轴 100px
+V('#test').css('transform', 'translate(0, 0)') // 初始化
+V('#test').animate('transform', 'translate(100px, 100px)', 2000)
+// 页面1秒滚动至 2000px，效果为弹跳
+V(window).animate('scrollTop', '2000px', 1000, 'easeBounceOut')
+// 第四个参数可选函数在 easing.js 中
+```
