@@ -5278,3 +5278,52 @@
 		.extend('animate', animate)
 		.extend('stop', stop)
 }(window)
+
+/**
+ * event.js
+ * 事件绑定与触发
+ * rely: Vessel.js
+ * owner: rusherwang
+ * create: 2016-9-1
+ */
+!function(window) {
+	var on, off
+	if (window.addEventListener) {
+		on = function(eventName, fn) {
+			this.each(function() {
+				this.addEventListener(eventName, fn, false)
+			}, true)
+		}
+		off = function(eventName, fn) {
+			this.each(function() {
+				this.removeEventListener(eventName, fn, false)
+			}, true)
+		}
+	} else if (window.attachEvent) {
+		on = function(eventName, fn) {
+			this.each(function() {
+				this.attachEvent('on' + eventName, fn)
+			}, true)
+		}
+		off = function(eventName, fn) {
+			this.each(function() {
+				this.detachEvent('on' + eventName, fn)
+			}, true)
+		}
+	} else {
+		on = function(eventName, fn) {
+			this.each(function() {
+				this['on' + eventName] = f;
+			}, true)
+		}
+		off = function(eventName, fn) {
+			this.each(function() {
+				this['on' + eventName] = null;
+			}, true)
+		}
+	}
+
+	Vessel.fn
+		.extend('on', on)
+		.extend('off', off)
+}(window)
