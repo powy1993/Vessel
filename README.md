@@ -8,25 +8,25 @@
 ### lang.js
 
 - **type** 返回数据类型
-        ``` js
-        V.lang.type('a') // string
-        V.lang.type(233) // number
-        V.lang.type(null) // null
-        V.lang.type(function(){}) // function
-        V.lang.type(document.body) // htmlbodyelement
-        ```
+``` js
+V.lang.type('a') // string
+V.lang.type(233) // number
+V.lang.type(null) // null
+V.lang.type(function(){}) // function
+V.lang.type(document.body) // htmlbodyelement
+```
 
 - **isUndefined** 是否是未定义数据
-        ``` js
-        V.lang.isUndefined(undefined) // true
-        V.lang.isUndefined(null) // false
-        ```
+``` js
+V.lang.isUndefined(undefined) // true
+V.lang.isUndefined(null) // false
+```
 
 - **isNull** 数据内容是否是Null
-        ``` js
-        V.lang.isUndefined(null) // true
-        V.lang.isUndefined(undefined) // false
-        ```
+``` js
+V.lang.isUndefined(null) // true
+V.lang.isUndefined(undefined) // false
+```
 
 - **isBoolean** 数据内容是否是布尔型
         ``` js
