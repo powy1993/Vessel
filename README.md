@@ -531,6 +531,8 @@ V('#test').val('test')
 
 ### promise.js (简易控制数据获取和回调装置)
 
+- **promose** 设置一批键值对数据
+- **defer** 异步请求一批键值对数据
 - **has** 是否含有某个数据
 - **set** 设置某个数据
 - **wait** 等待一定毫秒数之后继续执行
@@ -576,36 +578,6 @@ user.defer({
 })
 ```
 
-### easing.js (过渡专用的效果函数)
-[效果预览](http://1.rushervessel.applinzi.com/demo/easing.html)
-
-- **ease**
-- **easeQuadIn**
-- **easeQuadOut**
-- **easeQuadInOut**
-- **easeCubicIn**
-- **easeCubicOut**
-- **easeCubicInOut**
-- **easeSineIn**
-- **easeSineOut**
-- **easeSineInOut**
-- **easeExponentialIn**
-- **easeExponentialOut**
-- **easeExponentialInOut**
-- **easeCircleIn**
-- **easeCircleOu**
-- **easeCircleInOut**
-- **easeBackIn**
-- **easeBackOut**
-- **easeBackInOut**
-- **easeBounceIn**
-- **easeBounceOut**
-- **easeBounceInOut**
-- **easeElasticIn**
-- **easeElasticOut**
-- **easeElasticInOut**
-- **maker** 
-
 ### event.js (事件绑定与触发)
     预计 2016-10 之前完成
 
@@ -637,3 +609,33 @@ V('#test').stop()
 // 中止动画并结束在结尾位置，调用动画结束后的回调函数
 V('#test').stop(true)
 ```
+
+### easing.js (过渡专用的效果函数)
+[效果预览](http://1.rushervessel.applinzi.com/demo/easing.html)
+
+- **ease**
+- **easeQuadIn**
+- **easeQuadOut**
+- **easeQuadInOut**
+- **easeCubicIn**
+- **easeCubicOut**
+- **easeCubicInOut**
+- **easeSineIn**
+- **easeSineOut**
+- **easeSineInOut**
+- **easeExponentialIn**
+- **easeExponentialOut**
+- **easeExponentialInOut**
+- **easeCircleIn**
+- **easeCircleOu**
+- **easeCircleInOut**
+- **easeBackIn**
+- **easeBackOut**
+- **easeBackInOut**
+- **easeBounceIn**
+- **easeBounceOut**
+- **easeBounceInOut**
+- **easeElasticIn**
+- **easeElasticOut**
+- **easeElasticInOut**
+- **maker** 
