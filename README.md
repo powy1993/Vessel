@@ -403,12 +403,11 @@ local.set('test', 1, '2016/1/1')   // 2016年1月1日失效
 
 ### connect.js (异步数据获取)
 
-这块内容还在完善，之后会加入缓存机制
-load部分还没有写完
+这块内容还在完善，之后会加入缓存机制, load部分还没有写完
 
 - **get** 用 get 方法用服务器获取数据
 ``` js
-V.util.get({
+V.util.connect.get({
     url: 'ac.qq.com/test.php',
     data: {
         a: 1,
