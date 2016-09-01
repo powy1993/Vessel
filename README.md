@@ -624,7 +624,16 @@ V('#test').animate('background-color', '#333333', 1000, 'ease')
 // 使 id 为 test 元素的进行平移 x 轴 100px, y 轴 100px
 V('#test').css('transform', 'translate(0, 0)') // 初始化
 V('#test').animate('transform', 'translate(100px, 100px)', 2000)
-// 页面1秒滚动至 2000px，效果为弹跳
-V(window).animate('scrollTop', '2000px', 1000, 'easeBounceOut')
+// 页面1秒滚动至 2000px，效果为弹跳，结束之后调用回调函数
+V(window).animate('scrollTop', '2000px', 1000, 'easeBounceOut'，function() {
+    console.log('animate end!')
+})
 // 第四个参数可选函数在 easing.js 中
+```
+- **stop** 中止动画
+``` js
+// 中止动画并结束在当前位置
+V('#test').stop()
+// 中止动画并结束在结尾位置，调用动画结束后的回调函数
+V('#test').stop(true)
 ```
