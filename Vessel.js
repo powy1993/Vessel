@@ -73,22 +73,30 @@
 
 	Vessel.version = '1.0.1'
 
+	
 	// 消息通知，后续单独写出来
-	var warn = window.console && console.warn || (console = {}, function() {}),
-		log = window.console && console.log || (console = {}, function() {})
-	console.warn = function() {
-		try {
-			warn.apply(console, arguments)
-		} catch(e) {
-			warn(arguments[0])
-		}
-	}
-	console.log = function() {
-		try {
-			log.apply(console, arguments)
-		} catch(e) {
-			log(arguments[0])
-		}
+	var CONSOLE_METHOD = 'log|error|info|warn|dir|time|timeEnd|clear|table|assert|count|debug'.split('|'),
+		len = CONSOLE_METHOD.length,
+		method
+
+	while (len--) {
+		method = (window.console || (window.console = {})) && console[CONSOLE_METHOD[len]] || function() {}
+		window.console[CONSOLE_METHOD[len]] = function(method) {
+			return function() {
+				// 额外处理
+					
+				// 额外处理结束
+				try {
+					method.apply(console, arguments)
+				} catch(e) {
+					// 旧版本的浏览器可能不能对 console 使用 apply 或者 call
+					// 就分别对参数进行调用
+					var len = arguments.length,
+						i = 0
+					for (; i < len; ++i) method(arguments[i])
+				}
+			}
+		}(method)
 	}
 
 	window.Vessel = window.V = Vessel
@@ -4707,7 +4715,7 @@
 }()
 
 /**
- * change.js(#include css.js, animation.js)
+ * change.js(#include css.js, animate.js)
  * 让元素可以进行一些位置颜色透明度等变化的动态类
  * rely: Vessel.js, lang.js, browser.js, JSON.js
  * owner: rusherwang
@@ -5327,3 +5335,12 @@
 		.extend('on', on)
 		.extend('off', off)
 }(window)
+
+/*
+ * dev.js
+ * 开发者工具
+ */
+!function() {
+	// Element
+	// document.styleSheets Vessel.sizzle.matchesSelector
+}
