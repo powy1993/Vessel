@@ -3,6 +3,7 @@
  * owner: rusherwang
  * create: 2015-12-24
  */
+"use strict";
 !(function(window) {
 	// 将 new 放在内部可以无需在调用的时候 new Vessel()
 	// 所以这边用 原型链上的 init 作为构造函数
@@ -246,7 +247,7 @@
 		},
 		// 获得一个节点的标签名或者判断一个节点的标签名是否和 name 一致
 		tagName: function(node, name) {
-			n = node.nodeName && node.nodeName.toLowerCase()
+			var n = node.nodeName && node.nodeName.toLowerCase()
 			return name ? n === name.toLowerCase() : n
 		},
 		// 适配进制
@@ -641,7 +642,7 @@
 			return (s + '').replace(RUNNING_REG, function(s) {
 				var code = 'return ' + s.substring(2, s.length - 2),
 					varString = 'var ',
-					name, value
+					name, value, type
 				if (typeCheck.isObject(data)) {
 					for (name in data) {
 						value = data[name]
@@ -785,9 +786,7 @@
 					}
 				} else {
 					return function(s) {
-						return _makeDecode(s, function(s) {
-							return eval('(' + s + ')')
-						})
+						return _makeDecode(s, lang.globalEval)
 					}
 				}
 			}(),
@@ -1252,7 +1251,6 @@
 	browser.support = (function(support) {
 		var div = document.createElement('div'),
 			select = document.createElement('select'),
-			option = select.appendChild(document.createElement('option')),
 			input, a
 
 		// 初始化
@@ -3736,24 +3734,27 @@
 		// 有了这些包裹，使用 innerHTML 的时候才能正确创建所有节点
 		// 前面的数字表示外部有多少层，取的时候要取多少次子节点
 	var htmlWrap = {
+			// IE9-不能在开头使用 link script style 等标签，所以先保证开头不是这些标签，取的时候再去除即可
 			__default__: support.htmlLink ? [0, '', ''] : [1, 'v<div>', '</div>'],
 			option: [1, '<select multiple="multiple">', '</select>'],
 			legend: [1, '<fieldset>', '</fieldset>'],
 			area: [1, '<map>', '</map>'],
-			// Support for IE9-
+			// IE9-不能对这些标签的内容直接用 innerHTML，不然会出现意料之外的内容，将这些标签在他们各自要求的环境下创建再取出来就可以保证节点不会额外增加或减少
 			param: [1, '<object>', '</object>'],
 			thead: [1, '<table>', '</table>'],
 			tr: [2, '<table><tbody>', '</tbody></table>'],
 			col: [2, '<table><tbody></tbody><colgroup>', '</colgroup></table>'],
 			td: [3, '<table><tbody><tr>', '</tr></tbody></table>']
 		},
-		// 非 ie9- 兼容的 html 标签
+		// 非 ie9- 兼容的 html5 标签
 		nodeNames = 'abbr|article|aside|audio|bdi|canvas|data|datalist|details|dialog|figcaption|figure|footer|header|hgroup|main|mark|meter|nav|output|picture|progress|section|summary|template|time|video',
 		// 用来闭合 xHTML 的标签
 		// 当然，例如 <br/><img/>等 这些是符合标准的，不需要进行闭合处理
 		xhtmlTagFixReg = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:-]+)[^>]*)\/>/gi,
+		// IE9- 会自动去除开头内容为空或者换行符的文本节点，用正则判断之后将原来的节点补上
 		leadingWhitespaceReg = /^\s+/,
 		// 判断是否含有html标签的正则，主要用于处理在 html() 的时候是否创建文本节点
+		// 如果是纯文本，那么只需要使用 createTextNode 就可以了
 		hasTagReg = /<|&#?\w+;/,
 		tagNameReg = /<([\w:-]+)/,
 		// 判断是否含有 tbody
@@ -3889,7 +3890,7 @@
 		toDom = function(value) {
 			var type = lang.type(value),
 				res = [],
-				frag, div, tag, i, tbody
+				frag, div, tag, wrap, i, tbody
 			if (value.nodeType) {
 				if (value.nodeType !== 1 &&      // 元素节点
 					value.nodeType !== 3 &&      // 文本节点
@@ -3943,24 +3944,24 @@
 					while (i--) {
 						tbody = value.childNodes[i]
 						if (lang.tagName(tbody, 'tbody') && !tbody.childNodes.length) {
-							valye.removeChild(tbody)
+							value.removeChild(tbody)
 						}
 					}
 				}
 
 				lang.merge(res, div.childNodes)
 				// 下面是一些清理工作
-				// 这样创建下来的div是可能会有父亲节点的，所以要移除
+				// 因为我们在其他地方创建了 innerHTML 包含的内容并将他们移动到 html 文档的内部
+				// 在移动之前他们的父亲节点的内容是不对的，所以要先移除
 				div.textContent = '';
-				// 老的IE下是需要这样移除的
 				while (div.firstChild) {
 					div.removeChild(div.firstChild)
 				}
-
 				div = frag.lastChild
 				if (div) {
 					frag.removeChild(div)
 				}
+				// 取消引用，防止内存泄漏
 				div = null
 
 				return res
@@ -4747,6 +4748,7 @@
 		getStyles, curCSS,                // 获取样式相关
 		devideStyle,                      // 获取单位相关
 		cssHooks,                         // 样式钩子
+		animateHooks,					  // 动画钩子
 		css,                              // 样式属性的入口
 		animate,                          // 动画入口
 		stop,                             // 动画终止入口
@@ -5266,7 +5268,7 @@
 	animate = function(prop, end, duration, easing, callback) {
 		return prop && this.each(function() {
 			// 将动画加入队列中
-			tween = Tween(this, prop, end, duration, easing, callback)
+			var tween = Tween(this, prop, end, duration, easing, callback)
 			!tween.cancel && line.push(tween) && !interval && raf(true)
 		})
 	}
@@ -5321,7 +5323,7 @@
 	} else {
 		on = function(eventName, fn) {
 			this.each(function() {
-				this['on' + eventName] = f;
+				this['on' + eventName] = fn;
 			}, true)
 		}
 		off = function(eventName, fn) {
@@ -5339,8 +5341,11 @@
 /*
  * dev.js
  * 开发者工具
+ * rely: Vessel.js
+ * owner: rusherwang
+ * create: 2016-9-5
  */
 !function() {
 	// Element
 	// document.styleSheets Vessel.sizzle.matchesSelector
-}
+}()

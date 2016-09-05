@@ -38,9 +38,9 @@ V.lang.isBoolean(null)  // false
 
 - **isNumber** 数据内容是否是数值型
 ``` js
-V.lang.isNumber(1)  // true
-V.lang.isNumbe(1/0) // false
-V.lang.isNumbe(NaN) // false
+V.lang.isNumber(1)   // true
+V.lang.isNumber(1/0) // false
+V.lang.isNumber(NaN) // false
 ```
 
 - **isString** 数据内容是否是字符型
@@ -597,7 +597,7 @@ V('#test').animate('background-color', '#333333', 1000, 'ease')
 V('#test').css('transform', 'translate(0, 0)') // 初始化
 V('#test').animate('transform', 'translate(100px, 100px)', 2000)
 // 页面1秒滚动至 2000px，效果为弹跳，结束之后调用回调函数
-V(window).animate('scrollTop', '2000px', 1000, 'easeBounceOut'，function() {
+V(window).animate('scrollTop', '2000px', 1000, 'easeBounceOut', function() {
     console.log('animate end!')
 })
 // 第四个参数可选函数在 easing.js 中
