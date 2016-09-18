@@ -143,7 +143,7 @@ e === f             // false
 V.lang.equal(e, f)  // false
 ```
 
-- **contain** 比较前面的数据是否被后面的数据包含
+- **contain** 比较前面的数据是否包含后面的数据
 ``` js
 var a = [1, 2],
     b = ['a'],
@@ -151,10 +151,10 @@ var a = [1, 2],
         a: 1,
         b: 2
     }
-V.lang.contain(1, a)    // true
-V.lang.contain('1', a)  // false
-V.lang.contain(3, a)    // false
-V.lang.contain(b, c)    // true
+V.lang.contain(a, 1)    // true
+V.lang.contain(a, '1')  // false
+V.lang.contain(a, 3)    // false
+V.lang.contain(c, b)    // true
 ```
 
 - **clone** 克隆传入元素
@@ -233,37 +233,37 @@ V.lang.map(a, function(v) {
 }) // [2, 5, 3, 5, 4, 5]
 ```
 
-- **inString** 返回前面的字符在后面字符串的位置
+- **inString** 返回后面的字符串在前面字符串的位置
 ``` js
 var a = '12342'
-V.lang.inString('2', a)     // 1
-V.lang.inString('5', a)     // -1
+V.lang.inString(a, '2')     // 1
+V.lang.inString(a, '5')     // -1
 // 起始位置从第二个开始
-V.lang.inString('2', a, 2)  // 4
+V.lang.inString(a, '2', 2)  // 4
 ```
 
-- **strstr** 判断一个字符是否在后面的字符串中
+- **strstr** 判断一个字符是否在后面的字符串中，如果存在，则返回向后的子串
 ``` js
 var a = '1234'
-V.lang.strstr('2', a)     // true
-V.lang.strstr('5', a)     // false
+V.lang.strstr(a, '2')     // 234
+V.lang.strstr(a, '5')     // null
 ```
 
 - **inArray** 返回一个元素在数组中的位置
 ``` js
 var a = [1, 2, 3, 4, 2]
-V.lang.inArray(2, a)     // 1
-V.lang.inArray(5, a)     // -1
+V.lang.inArray(a, 2)     // 1
+V.lang.inArray(a, 5)     // -1
 // 起始位置从第二个开始
-V.lang.inArray(2, a, 2)  // 4
+V.lang.inArray(a, 2, 2)  // 4
 ```
 
-- **arrarr** 判断一个数据是否在后面的数组中
+- **arrarr** 判断一个数据是否在后面的数组中，如果存在，则返回向后的子数组
 ``` js
 var a = [1, 2, 3, 4, {}]
-V.lang.arrarr(2, a)     // true
-V.lang.arrarr(5, a)     // false
-V.lang.arrarr({}, a)    // true
+V.lang.arrarr(a, 2)     // [2, 3, 4, {}]
+V.lang.arrarr(a, 5)     // null
+V.lang.arrarr(a, {})    // [{}]
 ```
 
 - **uniqueSort** 排序并去重

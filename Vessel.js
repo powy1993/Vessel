@@ -305,7 +305,7 @@
 		// 输出 o2 是否包含 o1
 		// 可以用来比较数组或者对象或者函数内容是否有包含关系
 		// 注：这里认为 1 被 [1, 2] 包含, ['a', 'b'] 被 {'a': 1, 'b': 2} 包含
-		contain: function(o1, o2) {
+		contain: function(o2, o1) {
 			var o1Type = typeCheck.type(o1),
 				o2Type = typeCheck.type(o2),
 				key, len, i
@@ -313,9 +313,9 @@
 				if (o2Type === 'number') {
 					return o1 === o2
 				} else if (o2Type === 'string') {
-					return tool.strstr(o1, o2)
+					return tool.inString(o2, o1) !== -1
 				} else if (o2Type === 'array') {
-					return tool.arrarr(o1, o2)
+					return tool.inArray(o2, o1) !== -1
 				}
 			} else if (o1Type === 'array') {
 				len = o1.length
@@ -324,7 +324,7 @@
 						if (!tool.contain(o1[i], o2)) return false
 					} else {
 						if (o2Type === 'array') {
-							if (!tool.arrarr(o1[i], o2)) return false
+							if (tool.inArray(o2, o1[i]) === -1) return false
 						} else if (o2Type === 'object') {
 							if (!typeCheck.isset(o2[o1[i]])) return false
 						} else {
@@ -350,7 +350,7 @@
 				key, len, i
 			// 如果是节点类型的则克隆节点
 			// 这里要注意IE9-将DOM节点理解成'object'
-			if (tool.strstr('html', oType) ||
+			if (tool.inString(oType, 'html') !== -1 ||
 				oType === 'object' && !typeCheck.isObject(o)) {
 				return o.cloneNode && o.cloneNode(true) || o
 			}
@@ -467,12 +467,14 @@
 		// 返回前面的字符在后面字符串的位置
 		// 如果有 i 参数，则从第 i 位开始查找
 		// 如果不存在，则返回 -1
-		inString: function(cell, compare, i) {
+		inString: function(compare, cell, i) {
 			return compare.indexOf(cell, i) 
 		},
 		// 判断一个字符是否在后面的字符串中
-		strstr: function(cell, compare) {
-			return tool.inString(cell, compare) !== -1
+		// 如果是，则返回首次出现的地址
+		strstr: function(compare, cell) {
+			var loc = tool.inString(compare, cell)
+			return loc !== -1 ? compare.slice(loc) : null
 		},
 		// 返回一个元素在数组中的位置
 		// 如果有 i 参数，则从第 i 个开始查找
@@ -480,7 +482,7 @@
 		// 这里不直接用原生 indexOf 是因为在小量数据下表现没有循环好
 		// 并且我们可能需要比较例如 [1,2] 在不在 [[1,2], [2,3]] 的情况
 		// http://jsperf.com/thor-indexof-vs-for/5
-		inArray: function(item, arr, i) {
+		inArray: function(arr, item, i) {
 			var len = arr.length
 			// i 参数可以为负数表示从倒数第几个开始
 			i = i ? i < 0 ? Math.max(0, len + i) : i : 0
@@ -491,8 +493,9 @@
 			}
 			return -1
 		},
-		arrarr: function(item, arr) {
-			return tool.inArray(item, arr) !== -1
+		arrarr: function(arr, item) {
+			var loc = tool.inArray(arr, item)
+			return loc !== -1 ? arr.slice(loc) : null
 		},
 		// 这个方法用于数组排序之后去重
 		// fn 传入了排序时的比较函数
@@ -531,7 +534,7 @@
 				key
 			if (!typeCheck.isObject(o)) return false
 			// 这里对节点类型对象做了处理，变成可操作的数组类型
-			if (oType === 'nodeList' || tool.strstr('html', oType)) {
+			if (oType === 'nodeList' || tool.inString(oType, 'html') !== -1) {
 				return Array.prototype.slice.call(o, 0)
 			}
 			// 这里做了引用分离，防止污染
@@ -851,7 +854,7 @@
 					if (lang.isString(domain)) {
 						cookieText += '; domain=' + domain
 						// 这里要判断域是否是被允许的
-						if (!lang.strstr(domain, window.location.hostname)) {
+						if (lang.inString(window.location.hostname, domain) === -1) {
 							_warn('domain=' + domain)
 							return false
 						}
@@ -860,7 +863,7 @@
 					if (lang.isString(path)) {
 						cookieText += '; path=' + path
 						// 这里要判断路径是否是被允许的
-						if (!lang.strstr(path, window.location.pathname)) {
+						if (lang.inString(window.location.pathname, path) === -1) {
 							_warn('path=' + path)
 							return false
 						}
@@ -1075,7 +1078,7 @@
 				async = settings.async || true,
 				dataType = settings.dataType && settings.dataType.toUpperCase() || '',
 				callback = settings.callback || function() {},
-				formatUrlFlag = lang.strstr('?', url),
+				formatUrlFlag = lang.inString(url, '?') !== -1,
 				param = [],
 				key, value, devide,
 				_send = function(method, url, data, async) {
@@ -1111,7 +1114,20 @@
 			// 如果在 url 里面已经加入了部分参数，就需要进行转化
 			if (method === 'GET') {
 				url += data && ((formatUrlFlag ? '&' : '?') + data) || ''
-				_send(method, url, null, async)
+				if (dataType === 'JSONP') {
+					!function() {
+						var head = document.getElementsByTagName('head')[0],
+							script = document.createElement('script')
+						script.onload = script.onerror = script.onabort = function() {
+							script.onload = script.onerror = script.onabort = null
+							script = null
+						}
+						script.src = url + (lang.inString(url, '?') !== -1 ? '&' : '?') + '_=' + Math.random()
+						head.appendChild(script)
+					}()
+				} else {
+					_send(method, url, null, async)
+				}
 			} else if (method === 'POST') {
 				if (formatUrlFlag) {
 					devide = url.split('?')
@@ -1137,6 +1153,9 @@
 					return new Ajax(type, settings)
 				} else if (type === 'GETJSON') {
 					settings.dataType = 'JSON'
+					return new Ajax('GET', settings)
+				} else if (type === 'JSONP') {
+					settings.dataType = 'JSONP'
 					return new Ajax('GET', settings)
 				}
 			}
@@ -1166,7 +1185,7 @@
 		// 下面是取 webkit 版本
 		o.webkit = 0
 		// 使用 KHTML 的是 基于 webkit 的 Safari 或者 安卓浏览器
-		if (lang.strstr('KHTML', userAgent)) {
+		if (lang.inString(userAgent, 'KHTML') !== -1) {
 			o.webkit = 1
 		}
 
@@ -1199,7 +1218,7 @@
 		}
 
 		// 检测移动设备
-		if (lang.strstr(' Mobile', userAgent)) {
+		if (lang.inString(userAgent, ' Mobile') !== -1) {
 			o.mobile = 'unknown mobile device'
 			// 是否是 iPhone, iPod 或者 iPad
 			t = userAgent.match(/iPhone|iPod|iPad/)
@@ -3527,7 +3546,7 @@
 				res = [],
 				inGroup
 			lang.each(o, function() {
-				inGroup = lang.arrarr(this, compare)
+				inGroup = lang.inArray(compare, this) !== -1
 				if (inGroup && !not || !inGroup && not) {
 					res.push(this)
 				}
@@ -4087,7 +4106,7 @@
 		// 两边加上空格的原因是这样就可以把 空格+name+空格 当成一个整体判断
 		var old = ' ' + o.className + ' '
 		clsName = ' ' + lang.trim(clsName) + ' '
-		return lang.strstr(clsName, old)
+		return lang.inString(old, clsName) !== -1
 	}
 	// 检查元素是否有某个类
 	// 如果有很多元素，那么只要其中有一个含有，就返回true
@@ -5081,7 +5100,7 @@
 			},
 			set: function() {
 				// 这边将判断写在了外面，这样可以在执行的时候少判断一次
-				if (lang.strstr('Y', v)) {
+				if (lang.inString(v, 'Y') !== -1) {
 					return function(elem, prop, value) {
 						if (elem.parentNode) {
 							elem[prop] = value
@@ -5348,4 +5367,19 @@
 !function() {
 	// Element
 	// document.styleSheets Vessel.sizzle.matchesSelector
+	function getToken(skey) {
+		var hash = 5381,
+			// Magic Constant 5381:
+		 	// 1. odd number
+		 	// 2. prime number
+		 	// 3. deficient number
+		  	// 4. 001/010/100/000/101 b
+		  	len = skey.length,
+		  	i = 0
+		for (; i < len; ++i) {
+			hash += (hash << 5) + skey.charCodeAt(i)
+			// equal but faster than `hash = hash * 33 + skey.charCodeAt(len)`
+		}
+		return hash & 0x7fffffff // make result positive number
+	}
 }()
