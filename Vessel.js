@@ -302,41 +302,41 @@
 				return o1 === o2
 			}
 		},
-		// 输出 o2 是否包含 o1
+		// 输出 o1 是否包含 o2
 		// 可以用来比较数组或者对象或者函数内容是否有包含关系
-		// 注：这里认为 1 被 [1, 2] 包含, ['a', 'b'] 被 {'a': 1, 'b': 2} 包含
-		contain: function(o2, o1) {
+		// 注：这里认为 [1, 2] 包含 1, {'a': 1, 'b': 2} 包含 ['a', 'b']
+		contain: function(o1, o2) {
 			var o1Type = typeCheck.type(o1),
 				o2Type = typeCheck.type(o2),
 				key, len, i
-			if (o1Type === 'string' || o1Type === 'number') {
-				if (o2Type === 'number') {
+			if (o2Type === 'string' || o2Type === 'number') {
+				if (o1Type === 'number') {
 					return o1 === o2
-				} else if (o2Type === 'string') {
-					return tool.inString(o2, o1) !== -1
-				} else if (o2Type === 'array') {
-					return tool.inArray(o2, o1) !== -1
+				} else if (o1Type === 'string') {
+					return tool.inString(o1, o2) !== -1
+				} else if (o1Type === 'array') {
+					return tool.inArray(o1, o2) !== -1
 				}
-			} else if (o1Type === 'array') {
-				len = o1.length
+			} else if (o2Type === 'array') {
+				len = o2.length
 				for (i = 0; i < len; ++i) {
-					if (typeCheck.isObject(o1[i])) {
-						if (!tool.contain(o1[i], o2)) return false
+					if (typeCheck.isObject(o2[i])) {
+						if (!tool.contain(o1, o2[i])) return false
 					} else {
-						if (o2Type === 'array') {
-							if (tool.inArray(o2, o1[i]) === -1) return false
-						} else if (o2Type === 'object') {
-							if (!typeCheck.isset(o2[o1[i]])) return false
+						if (o1Type === 'array') {
+							if (tool.inArray(o1, o2[i]) === -1) return false
+						} else if (o1Type === 'object') {
+							if (!typeCheck.isset(o1[o2[i]])) return false
 						} else {
 							return false
 						}
 					}
 				}
 				return true
-			} else if (o1Type === 'object') {
-				if (o2Type === 'object') {
-					for (key in o1) {
-						if (!typeCheck.isset(o2[key]) || !tool.contain(o1[key], o2[key])) return false
+			} else if (o2Type === 'object') {
+				if (o1Type === 'object') {
+					for (key in o2) {
+						if (!typeCheck.isset(o1[key]) || !tool.contain(o1[key], o2[key])) return false
 					}
 					return true
 				}
@@ -4264,7 +4264,7 @@
 	// 这里本来可以添加缓存，表示数据已经被检查过一次了
 	// 但是考虑到可能被异步改变值而导致出错，所以没加
 	need = function(needData) {
-		return lang.contain(needData, this.get())
+		return lang.contain(this.get(), needData)
 	}
 
 	// 对 whenList 堆叠的事件进行操作
@@ -4307,13 +4307,13 @@
 					t = t[part[i]] = {}
 					// 如果可以转成数字就转成数字
 					t[layer[0]] = isNaN(+layer[1]) ? layer[1] : +layer[1]
-				} else {
+					res[len] = partLen === 1 ? t : temp
+				} else if (partLen === 2) {
 					t[part[i]] = [layer[0]]
+					res[len] = t
 				}
-				res[len] = partLen === 1 ? o[len] : temp
-			} else {
-				res[len] = o[len]
 			}
+			lang.isUndefined(res[len]) && (res[len] = o[len])
 		}
 		return res
 	}
@@ -4403,7 +4403,9 @@
 			need: parse(needData),
 			fn: fn
 		}
-		return push.call(this, whenEvent, true)
+		push.call(this, whenEvent, true)
+		when.call(this)
+		return this
 	}
 	// 事件等待
 	// 这里是运行到这个函数的时候置一个状态位，表示正在等待
