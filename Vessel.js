@@ -652,7 +652,7 @@
 						type = typeCheck.type(value)
 						varString += name + '='
 									+ (type === 'object' ? Vessel.lang.JSON.encode(value)
-									:  type === 'string' ?  '"' + value + '"' : value)
+									:  type === 'string' ?  '"' + value.replace(/\"/g, '\\"') + '"' : value)
 									+ ','
 					}
 					code = varString.substring(0, varString.length - 1) + ';' + code
@@ -1263,6 +1263,26 @@
 	// 获取浏览器可视高度
 	browser.getHeight = function() {
 		return docEle.clientHeight || window.innerHeight
+	}
+
+	// 获取链接内参数
+	browser.getUrlParam = function(key) {
+		var reg, res, part
+		if (lang.isset(key)) {
+			reg = new RegExp('(^|&)' + key + '=([^&]*)(&|$)')
+			res = window.location.search.substring(1).match(reg)
+			return res && res[2] && decodeURIComponent(res[2]) || null
+		} else {
+			part = window.location.search.substring(1).split('&')
+			res = {}
+			lang.each(part, function() {
+				var t = this.split('=')
+				if (t && t[0]) {
+					res[decodeURIComponent(t[0])] = t[1] ? decodeURIComponent(t[1]) : ''
+				}
+			})
+			return res
+		}
 	}
 
 	// 不同浏览器特性检测或者漏洞检测

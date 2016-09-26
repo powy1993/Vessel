@@ -434,6 +434,7 @@ V.util.connect.get({
     - **cssCore** 浏览器css特性前缀
     - **getWidth** 获取浏览器可视宽度
     - **getHeight** 获取浏览器可视高度
+    - **getUrlParam** 获取链接内参数
 ```js
 // 以 chrome 手机模拟安卓浏览器为例
 V.browser.webkit        // 537.36
@@ -442,7 +443,7 @@ V.browser.mobile        // 'Android'
 V.browser.android       // '6.0'
 V.browser.software      // 'Chrome'
 V.browser.cssCore       // 'webkit'
-V.browser.getWidth()    // 640
+V.browser.getWidth()    // 375
 V.browser.getHeight()   // 768
 ```
 
