@@ -4852,10 +4852,12 @@
 		cssHooks[key] = {
 			get: function(elem, key) {
 				var value = key === 'width' ? elem.offsetWidth : elem.offsetHeight
-				if (value <= 0 || !lang.isset(value)) {
+				if (!lang.isset(value)) {
 					value = curCSS(elem, key)
+				} else {
+					value += 'px'
 				}
-				return value + 'px'
+				return value
 			},
 			set: function(elem, key, value) {
 				elem.style[key] = value === '' ? 'auto' : value
@@ -5003,7 +5005,7 @@
 			if (needRunReg.test(value)) {
 				needRun = true
 			} else {
-				if (!lang.empty(value) && lang.isNumber(+value)) {
+				if (lang.isNumber(+value)) {
 					value += cssOnlyNumber[key] ? '' : 'px'
 				}
 			}
