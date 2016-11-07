@@ -3945,7 +3945,7 @@
 					return this.nodeType ? this : undefined
 				})
 			}
-			if (type === 'string') {
+			if (type === 'string' || type === 'number') {
 				if (!hasTagReg.test(value)) {
 					return [document.createTextNode(value)]
 				}
