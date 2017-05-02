@@ -4446,9 +4446,10 @@
 	// 可以在确定已经全部步骤执行完了之后调用(或者 when 里面的事件不再需要)
 	// 主要是为了清理内存
 	proto.reject = function() {
-		this.data = null
-		this.eventLine = null
-		this.whenList = null
+		this.data = {}
+		this.eventLine = []
+		this.whenList = []
+		this.state = STATE.READY
 		return
 	}
 	// 判断是否有某些变量，如果不存在，则会阻塞
